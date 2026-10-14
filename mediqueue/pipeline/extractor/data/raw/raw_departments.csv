@@ -1,0 +1,10 @@
+department_id,department_code,department_name,floor_number,target_wait_min
+1,OPD,Outpatient General Medicine,1,15
+2,CARD,Cardiology,2,20
+3,ORTHO,Orthopedics,2,20
+4,PEDS,Pediatrics,1,15
+5,RAD,Radiology,0,25
+6,LAB,Pathology & Biochemistry,0,15
+7,PHARM,Central Pharmacy,1,10
+8,EMERG,Emergency & Trauma,1,10
+9,SURG,General Surgery Clinic,3,25

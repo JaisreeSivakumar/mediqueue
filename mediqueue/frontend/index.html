@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediQueue — Big Data Hospital Workflow & Bottleneck Analytics</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dark-theme">
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h2>MediQueue</h2>
+                    <span class="badge-sub">Big Data Analytics</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#overview" class="nav-item active" data-section="overview">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Overview Dashboard</span>
+                </a>
+                <a href="#departments" class="nav-item" data-section="departments">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    <span>Department Analytics</span>
+                </a>
+                <a href="#patient-flow" class="nav-item" data-section="patient-flow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Patient Journey Flow</span>
+                </a>
+                <a href="#bottlenecks" class="nav-item" data-section="bottlenecks">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>Bottleneck Radar</span>
+                    <span class="nav-pill" id="nav-bottleneck-count">0</span>
+                </a>
+                <a href="#pipeline" class="nav-item" data-section="pipeline">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span>Pipeline & Ingestion</span>
+                </a>
+                <a href="#reports" class="nav-item" data-section="reports">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    <span>Analytical Reports</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="tech-stack-indicator">
+                    <span class="tech-pill">HDFS</span>
+                    <span class="tech-pill">PIG</span>
+                    <span class="tech-pill">HIVE</span>
+                    <span class="tech-pill">MONGO</span>
+                    <span class="tech-pill">JAVA</span>
+                </div>
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span id="backend-status-text">Backend Connected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1 id="page-title">Hospital Operational Overview</h1>
+                    <p class="subtitle" id="page-subtitle">Real-time Big Data metrics derived from historical workflow records</p>
+                </div>
+                <div class="topbar-right">
+                    <div class="refresh-badge" id="btn-refresh" title="Refresh Live Analytics">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        <span>Sync Analytics</span>
+                    </div>
+                    <div class="live-clock" id="live-clock">--:--:--</div>
+                </div>
+            </header>
+
+            <!-- SECTION 1: OVERVIEW DASHBOARD -->
+            <section id="section-overview" class="content-section active">
+                <!-- 6 KPI Metric Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card card-cyan">
+                        <div class="kpi-header">
+                            <span class="kpi-title">TOTAL PATIENT VISITS</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="kpi-total-visits">5,000</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-badge badge-success">✓ Verified Valid</span>
+                            <span class="kpi-sub" id="kpi-stages-total">22,850 workflow stages</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-amber">
+                        <div class="kpi-header">
+                            <span class="kpi-title">AVG QUEUE WAIT TIME</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="kpi-avg-wait">19.1 <span class="unit">min</span></div>
+                        <div class="kpi-footer">
+                            <span class="kpi-badge badge-warning">Target: 20 min</span>
+                            <span class="kpi-sub">Across all departments</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-purple">
+                        <div class="kpi-header">
+                            <span class="kpi-title">AVG VISIT DURATION</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="kpi-avg-duration">68.5 <span class="unit">min</span></div>
+                        <div class="kpi-footer">
+                            <span class="kpi-badge badge-info">Registration → Exit</span>
+                            <span class="kpi-sub">Door-to-discharge</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-teal">
+                        <div class="kpi-header">
+                            <span class="kpi-title">DEPARTMENTS ANALYZED</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="kpi-total-departments">9</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-badge badge-success">100% Monitored</span>
+                            <span class="kpi-sub">OPD, Card, Rad, Pharm...</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-rose">
+                        <div class="kpi-header">
+                            <span class="kpi-title">BOTTLENECKS DETECTED</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="kpi-bottlenecks-count">66</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-badge badge-danger">2 Critical</span>
+                            <span class="kpi-sub">Wait > 1.5x target</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-blue">
+                        <div class="kpi-header">
+                            <span class="kpi-title">PEAK CONGESTION HOUR</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="kpi-peak-hour">11:00</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-badge badge-warning">Morning Surge</span>
+                            <span class="kpi-sub">Max concurrent arrivals</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 1 -->
+                <div class="charts-grid-2">
+                    <div class="chart-panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Hourly Patient Arrival & Waiting Time Trend</h3>
+                                <p class="panel-sub">Volume of arrivals vs queue waiting times across 24 hours</p>
+                            </div>
+                            <span class="panel-tag">Pig/Hive Aggregation</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-hourly"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Department Wait vs Service Duration</h3>
+                                <p class="panel-sub">Comparison of queue latency against clinical consultation time</p>
+                            </div>
+                            <span class="panel-tag">Department Ranking</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-dept-wait"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaderboard & Workflow Summary Row -->
+                <div class="charts-grid-2">
+                    <div class="table-panel">
+                        <div class="panel-header">
+                            <h3>Top Congested Departments</h3>
+                            <a href="#departments" class="panel-link">View All Departments →</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-overview-depts">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Department</th>
+                                        <th>Visits</th>
+                                        <th>Avg Wait</th>
+                                        <th>Target</th>
+                                        <th>% Exceeding</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody><!-- Populated dynamically --></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="panel-card journey-summary-panel">
+                        <div class="panel-header">
+                            <h3>Patient Journey Timeline Summary</h3>
+                            <span class="panel-tag">Average Flow</span>
+                        </div>
+                        <div class="flow-stepper-mini" id="overview-flow-stepper">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: DEPARTMENT ANALYSIS -->
+            <section id="section-departments" class="content-section">
+                <div class="section-toolbar">
+                    <div class="filter-group">
+                        <label for="dept-filter-select">Select Department:</label>
+                        <select id="dept-filter-select" class="styled-select">
+                            <option value="ALL">All Departments (9)</option>
+                        </select>
+                    </div>
+                    <div class="metric-toggles">
+                        <span class="tag-metric">Target Compliance: <strong>72.4%</strong></span>
+                        <span class="tag-metric">P90 Threshold: <strong>32.8m</strong></span>
+                    </div>
+                </div>
+
+                <div class="table-panel full-width">
+                    <div class="panel-header">
+                        <h3>Department Wait Time, Service Duration & Percentile Distribution</h3>
+                        <button class="btn-sm btn-outline" id="btn-export-depts-csv">Download CSV</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="table-full-departments">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Code</th>
+                                    <th>Department Name</th>
+                                    <th>Patients Served</th>
+                                    <th>Avg Wait</th>
+                                    <th>Median Wait</th>
+                                    <th>Min - Max</th>
+                                    <th>90th Percentile</th>
+                                    <th>Avg Service</th>
+                                    <th>Target</th>
+                                    <th>Exceeding Target %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody><!-- Populated dynamically --></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="charts-grid-2">
+                    <div class="chart-panel">
+                        <div class="panel-header">
+                            <h3>Department Patient Volume Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-dept-volume"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-panel">
+                        <div class="panel-header">
+                            <h3>Percent of Patients Exceeding Target Wait</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-dept-exceeding"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: PATIENT FLOW JOURNEY -->
+            <section id="section-patient-flow" class="content-section">
+                <div class="workflow-visualizer-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Hospital Patient Journey Flow Diagram</h3>
+                            <p class="panel-sub">Step-by-step operational progression: Queue Delays vs Active Treatment Durations</p>
+                        </div>
+                    </div>
+
+                    <!-- Flow Diagram -->
+                    <div class="flow-diagram-container" id="flow-diagram">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Individual Journey Explorer -->
+                <div class="journey-explorer-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Patient Journey Explorer</h3>
+                            <p class="panel-sub">Inspect end-to-end multi-stage patient pathways stored in MongoDB</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="table-sample-journeys">
+                            <thead>
+                                <tr>
+                                    <th>Visit ID</th>
+                                    <th>Patient ID</th>
+                                    <th>Age Group</th>
+                                    <th>Gender</th>
+                                    <th>Admission</th>
+                                    <th>Date</th>
+                                    <th>Total Stages</th>
+                                    <th>Total Wait</th>
+                                    <th>Total Service</th>
+                                    <th>Total Duration</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody><!-- Populated dynamically --></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: BOTTLENECK RADAR -->
+            <section id="section-bottlenecks" class="content-section">
+                <div class="bottleneck-controls-bar">
+                    <div class="severity-filters">
+                        <button class="filter-pill active" data-severity="ALL">All Bottlenecks (<span id="count-all-b">0</span>)</button>
+                        <button class="filter-pill pill-critical" data-severity="CRITICAL">Critical (<span id="count-crit-b">0</span>)</button>
+                        <button class="filter-pill pill-high" data-severity="HIGH">High (<span id="count-high-b">0</span>)</button>
+                        <button class="filter-pill pill-moderate" data-severity="MODERATE">Moderate (<span id="count-mod-b">0</span>)</button>
+                    </div>
+
+                    <div class="threshold-simulator">
+                        <label for="threshold-slider">Congestion Multiplier Filter: <strong id="multiplier-label">1.5x</strong></label>
+                        <input type="range" id="threshold-slider" min="1.0" max="4.0" step="0.1" value="1.5">
+                    </div>
+                </div>
+
+                <div class="bottlenecks-grid" id="bottlenecks-container">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- SECTION 5: PIPELINE & INGESTION -->
+            <section id="section-pipeline" class="content-section">
+                <!-- System Architecture Topology Tracker -->
+                <div class="topology-panel">
+                    <div class="panel-header">
+                        <h3>Big Data Processing Architecture Topology</h3>
+                        <span class="badge-success">Operational Pipeline</span>
+                    </div>
+                    <div class="architecture-flow">
+                        <div class="arch-node">
+                            <div class="arch-badge">Source DB</div>
+                            <h4>MySQL 8.0</h4>
+                            <p>Port 3307</p>
+                            <span class="status-badge-ok">5,000 Visits</span>
+                        </div>
+                        <div class="arch-arrow">➔</div>
+                        <div class="arch-node">
+                            <div class="arch-badge">Extractor</div>
+                            <h4>Java JDBC</h4>
+                            <p>Validation Engine</p>
+                            <span class="status-badge-ok">421 Dirty Dropped</span>
+                        </div>
+                        <div class="arch-arrow">➔</div>
+                        <div class="arch-node">
+                            <div class="arch-badge">Distributed Storage</div>
+                            <h4>Hadoop HDFS</h4>
+                            <p>/mediqueue/raw</p>
+                            <span class="status-badge-ok">Port 9000</span>
+                        </div>
+                        <div class="arch-arrow">➔</div>
+                        <div class="arch-node">
+                            <div class="arch-badge">ETL Cleaning</div>
+                            <h4>Apache Pig</h4>
+                            <p>MapReduce 0.18</p>
+                            <span class="status-badge-ok">22,850 Cleaned</span>
+                        </div>
+                        <div class="arch-arrow">➔</div>
+                        <div class="arch-node">
+                            <div class="arch-badge">Analytics Engine</div>
+                            <h4>Apache Hive</h4>
+                            <p>External HQL Tables</p>
+                            <span class="status-badge-ok">Aggregations</span>
+                        </div>
+                        <div class="arch-arrow">➔</div>
+                        <div class="arch-node">
+                            <div class="arch-badge">Target Store</div>
+                            <h4>MongoDB 6.0</h4>
+                            <p>Port 27017</p>
+                            <span class="status-badge-ok">Documents Ingested</span>
+                        </div>
+                        <div class="arch-arrow">➔</div>
+                        <div class="arch-node">
+                            <div class="arch-badge">API Backend</div>
+                            <h4>Spring Boot</h4>
+                            <p>Port 8080</p>
+                            <span class="status-badge-ok">REST Endpoints</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pipeline Execution Control & Upload Simulator -->
+                <div class="charts-grid-2">
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h3>Execute Big Data Pipeline</h3>
+                            <span class="panel-tag">Manual Trigger</span>
+                        </div>
+                        <p class="panel-desc">Runs the Java Extractor, uploads CSV to HDFS, triggers Apache Pig cleaning, computes Hive analytics, and flushes to MongoDB.</p>
+                        
+                        <div class="pipeline-actions">
+                            <button class="btn btn-primary" id="btn-run-pipeline">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span>Execute Full Pipeline</span>
+                            </button>
+                            <button class="btn btn-outline" id="btn-check-pipeline-status">Check Service Status</button>
+                        </div>
+                        <div id="pipeline-exec-status" class="terminal-box">Pipeline idle. Ready for execution.</div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h3>Dataset Upload & Validation Engine</h3>
+                            <span class="panel-tag">Data Ingestion</span>
+                        </div>
+                        <p class="panel-desc">Upload authorized hospital CSV records to run timestamp validation and detect dirty records before staging into HDFS.</p>
+                        
+                        <div class="upload-dropzone" id="upload-dropzone">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <p>Drag and drop hospital workflow CSV or click to browse</p>
+                            <input type="file" id="csv-file-input" accept=".csv" style="display:none">
+                            <button class="btn-sm btn-outline" onclick="document.getElementById('csv-file-input').click()">Select CSV File</button>
+                        </div>
+                        <div id="validation-report-box" class="validation-box">
+                            <span>Ready to validate schema (stage_id, arrival_ts, service_start_ts, service_end_ts)</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 6: ANALYTICAL REPORTS -->
+            <section id="section-reports" class="content-section">
+                <div class="reports-header-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Analytical Reports & Data Exports</h3>
+                            <p class="panel-sub">Download production Big Data analytical reports in standard CSV format</p>
+                        </div>
+                    </div>
+
+                    <div class="reports-download-grid">
+                        <div class="report-download-card">
+                            <div class="report-info">
+                                <h4>Department Performance & Percentiles</h4>
+                                <p>Complete wait times, p90 thresholds, target violations, and rankings.</p>
+                            </div>
+                            <a href="http://localhost:8080/api/reports/departments/csv" class="btn btn-sm btn-download">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>Export CSV</span>
+                            </a>
+                        </div>
+
+                        <div class="report-download-card">
+                            <div class="report-info">
+                                <h4>Bottleneck Incident Audit Report</h4>
+                                <p>Recurring bottleneck locations, hours, severity, and root-cause statements.</p>
+                            </div>
+                            <a href="http://localhost:8080/api/reports/bottlenecks/csv" class="btn btn-sm btn-download">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>Export CSV</span>
+                            </a>
+                        </div>
+
+                        <div class="report-download-card">
+                            <div class="report-info">
+                                <h4>24-Hour Congestion & Arrival Curves</h4>
+                                <p>Hourly patient throughput, queue delays, and severe congestion ratios.</p>
+                            </div>
+                            <a href="http://localhost:8080/api/reports/hourly/csv" class="btn btn-sm btn-download">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>Export CSV</span>
+                            </a>
+                        </div>
+
+                        <div class="report-download-card">
+                            <div class="report-info">
+                                <h4>Daily Hospital Operational Summaries</h4>
+                                <p>Day-by-day unique visits, completed stages, and average turnaround times.</p>
+                            </div>
+                            <a href="http://localhost:8080/api/reports/daily/csv" class="btn btn-sm btn-download">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>Export CSV</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Performance Trends Chart -->
+                <div class="chart-panel full-width">
+                    <div class="panel-header">
+                        <h3>Daily Patient Volume & Average Waiting Times Trend</h3>
+                        <span class="panel-tag">30-Day Historical Flow</span>
+                    </div>
+                    <div class="chart-container" style="height: 320px;">
+                        <canvas id="chart-daily-trends"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Journey Detail Modal -->
+    <div class="modal-overlay" id="journey-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modal-journey-title">Patient Journey Details</h3>
+                    <p class="modal-sub" id="modal-journey-sub">Visit ID: --</p>
+                </div>
+                <button class="modal-close-btn" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-journey-body">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
